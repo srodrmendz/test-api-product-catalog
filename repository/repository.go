@@ -6,124 +6,190 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	internalErr "github.com/srodrmendz/api-auth/errors"
-	"github.com/srodrmendz/api-auth/model"
+	internalError "github.com/srodrmendz/api-product-catalog/errors"
+	"github.com/srodrmendz/api-product-catalog/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"golang.org/x/crypto/bcrypt"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"golang.org/x/sync/errgroup"
 )
 
-// Create new user repository
-func New(client *mongo.Client, database string, collection string) *UsersRepository {
-	return &UsersRepository{
+// Create new product repository
+func New(client *mongo.Client, database string, collection string) *ProductsCatalogRepository {
+	return &ProductsCatalogRepository{
 		collection: client.Database(database).Collection(collection),
 	}
 }
 
-// Create a new user
-func (r *UsersRepository) Create(ctx context.Context, user model.User) (*model.User, error) {
-	user.ID = uuid.NewString()
+// Create a new product
+func (r *ProductsCatalogRepository) Create(ctx context.Context, product model.Product) (*model.Product, error) {
+	product.ID = uuid.NewString()
 
-	// Set created and updated date at current date
 	now := time.Now()
 
-	user.CreatedAt = now
+	product.CreatedAt = now
 
-	user.UpdatedAt = now
+	product.UpdatedAt = now
 
-	// Generate bcrypt hashed password
-	password, err := r.generatePassword(user.Password)
-	if err != nil {
-		return nil, fmt.Errorf("generating password %w", err)
-	}
-
-	user.Password = *password
+	product.InStock = product.Qty > 0
 
 	// Create user on repository
-	if _, err := r.collection.InsertOne(ctx, user); err != nil {
+	if _, err := r.collection.InsertOne(ctx, product); err != nil {
 		writeError, ok := err.(mongo.WriteException)
 		if !ok {
-			return nil, fmt.Errorf("creating user %s on repository %w", user.Email, err)
+			return nil, fmt.Errorf("creating product %s on repository %w", product.Name, err)
 		}
 
 		for _, wErr := range writeError.WriteErrors {
 			if wErr.Code == mongoDBDuplicatedKeyErrorCode {
-				return nil, internalErr.ErrUserAlreadyExist
+				return nil, internalError.ErrProductSKUAlreadyExist
 			}
 		}
 
-		return nil, fmt.Errorf("creating user %s on repository %w", user.Email, err)
+		return nil, fmt.Errorf("creating product %s on repository %w", product.Name, err)
 	}
 
-	return &user, nil
+	return &product, nil
 }
 
-// Authenticate user credentials
-func (r *UsersRepository) Authenticate(ctx context.Context, email string, password string) (*model.UserResponse, error) {
-	response := r.collection.FindOne(ctx, bson.M{"email": email})
+// Get a product by id
+func (r *ProductsCatalogRepository) GetByID(ctx context.Context, id string) (*model.Product, error) {
+	resp := r.collection.FindOne(ctx, bson.M{"_id": id})
 
-	// Check if user exist on repository
-	if response.Err() != nil {
-		return nil, internalErr.ErrUserNotFound
+	if resp.Err() != nil {
+		return nil, internalError.ErrProductNotFound
 	}
 
-	var user model.User
+	var product model.Product
 
-	if err := response.Decode(&user); err != nil {
-		return nil, fmt.Errorf("decoding user from repository %w", err)
+	if err := resp.Decode(&product); err != nil {
+		return nil, fmt.Errorf("decoding product from repository %w", err)
 	}
 
-	// Check user password is valid
-	if !r.checkPasswordIsValid(user.Password, password) {
-		return nil, internalErr.ErrUserNotFound
-	}
-
-	return model.MapUserToResponse(user), nil
+	return &product, nil
 }
 
-// Delete user
-func (r *UsersRepository) Delete(ctx context.Context, id string) error {
+// Get a product by sku
+func (r *ProductsCatalogRepository) GetBySKU(ctx context.Context, sku string) (*model.Product, error) {
+	resp := r.collection.FindOne(ctx, bson.M{"sku": sku})
+
+	if resp.Err() != nil {
+		return nil, internalError.ErrProductNotFound
+	}
+
+	var product model.Product
+
+	if err := resp.Decode(&product); err != nil {
+		return nil, fmt.Errorf("decoding product from repository %w", err)
+	}
+
+	return &product, nil
+}
+
+// Delete product
+func (r *ProductsCatalogRepository) Delete(ctx context.Context, id string) error {
 	if _, err := r.collection.DeleteOne(ctx, bson.M{"_id": id}); err != nil {
-		return fmt.Errorf("deleting user from repository %w", err)
+		return fmt.Errorf("deleting product from repository %w", err)
 	}
 
 	return nil
 }
 
-// Get user by id
-func (r *UsersRepository) GetByID(ctx context.Context, id string) (*model.UserResponse, error) {
-	response := r.collection.FindOne(ctx, bson.M{"_id": id})
+// Update a product
+func (r *ProductsCatalogRepository) Update(ctx context.Context, id string, qty uint64) (*model.Product, error) {
+	filter := bson.M{"_id": id}
 
-	// Check if user exist on repository
-	if response.Err() != nil {
-		return nil, internalErr.ErrUserNotFound
+	update := bson.M{
+		"$set": bson.M{
+			"qty":        qty,
+			"updated_at": time.Now(),
+			"in_stock":   qty > 0,
+		},
 	}
 
-	var user model.User
+	var product model.Product
 
-	if err := response.Decode(&user); err != nil {
-		return nil, fmt.Errorf("decoding user from repository %w", err)
+	err := r.
+		collection.
+		FindOneAndUpdate(
+			ctx,
+			filter,
+			update,
+			options.FindOneAndUpdate().SetReturnDocument(options.After)).
+		Decode(&product)
+	if err != nil {
+		return nil, internalError.ErrProductNotFound
 	}
 
-	return model.MapUserToResponse(user), nil
+	return &product, nil
 }
 
-// Generate user hashed password using bcrypt
-func (r *UsersRepository) generatePassword(pass string) (*string, error) {
-	b, err := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
+// Search products
+func (r *ProductsCatalogRepository) Search(ctx context.Context, limit int, offset int) ([]model.Product, *int64, error) {
+	eg, _ := errgroup.WithContext(ctx)
+
+	var products []model.Product
+
+	var total int64
+
+	// Call concurrenlty search method
+	eg.Go(func() error {
+		prds, err := r.search(ctx, limit, offset)
+		if err != nil {
+			return err
+		}
+
+		products = prds
+
+		return nil
+	})
+
+	// Call concurrenlty get total items on db
+	eg.Go(func() error {
+		tl, err := r.getTotal(ctx)
+		if err != nil {
+			return err
+		}
+
+		total = tl
+
+		return nil
+	})
+
+	if err := eg.Wait(); err != nil {
+		return nil, nil, err
+	}
+
+	return products, &total, nil
+}
+
+func (r *ProductsCatalogRepository) search(ctx context.Context, limit int, offset int) ([]model.Product, error) {
+	opt := options.Find()
+
+	opt.SetLimit(int64(limit))
+
+	opt.SetSkip(int64(offset))
+
+	cursor, err := r.collection.Find(ctx, bson.D{}, opt)
 	if err != nil {
 		return nil, err
 	}
 
-	password := string(b)
+	var products []model.Product
 
-	return &password, nil
+	for cursor.Next(ctx) {
+		var product model.Product
+
+		if err := cursor.Decode(&product); err != nil {
+			return nil, fmt.Errorf("decoding product from repository %w", err)
+		}
+
+		products = append(products, product)
+	}
+
+	return products, nil
 }
 
-// Check user bcrypt hashed password with password
-func (r *UsersRepository) checkPasswordIsValid(hashedPassword string, password string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
-
-	// Password is valid if error is nil
-	return err == nil
+func (r *ProductsCatalogRepository) getTotal(ctx context.Context) (int64, error) {
+	return r.collection.CountDocuments(ctx, bson.M{})
 }

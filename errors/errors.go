@@ -3,6 +3,6 @@ package errors
 import "errors"
 
 var (
-	ErrUserNotFound     = errors.New("user credentials not valid")
-	ErrUserAlreadyExist = errors.New("user already exist")
+	ErrProductSKUAlreadyExist = errors.New("product sku already exist")
+	ErrProductNotFound        = errors.New("product not found")
 )

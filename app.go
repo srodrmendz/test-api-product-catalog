@@ -6,10 +6,10 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/srodrmendz/api-auth/conf"
-	"github.com/srodrmendz/api-auth/repository"
-	"github.com/srodrmendz/api-auth/server"
-	"github.com/srodrmendz/api-auth/service"
+	"github.com/srodrmendz/api-product-catalog/conf"
+	"github.com/srodrmendz/api-product-catalog/repository"
+	"github.com/srodrmendz/api-product-catalog/server"
+	"github.com/srodrmendz/api-product-catalog/service"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -43,17 +43,13 @@ func main() {
 	)
 
 	// Create service
-	service := service.New(
-		repository,
-		conf.GetProps().SecretKey,
-	)
+	service := service.New(repository)
 
 	// Create app
 	app := server.New(
 		service,
 		mux.NewRouter(),
 		conf.GetProps().Path,
-		conf.GetProps().SecretKey,
 		version,
 		buildDate,
 	)

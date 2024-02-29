@@ -2,11 +2,9 @@ package server
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
-	"strings"
 
-	"github.com/srodrmendz/api-auth/utils"
+	"github.com/srodrmendz/api-product-catalog/utils"
 )
 
 // Middleware used for not handled exceptions
@@ -28,29 +26,4 @@ func (a *App) panicRecoveryMiddleware(next http.Handler) http.Handler {
 
 func (a *App) serveHTTP(w http.ResponseWriter, req *http.Request) {
 	a.Router.ServeHTTP(w, req)
-}
-
-// Middleware used for authenticated routes
-func (a *App) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		tkHeader := r.Header.Get("Authorization")
-
-		spl := strings.Split(tkHeader, "Bearer ")
-
-		if len(spl) != bearerTokenHeaderLength {
-			utils.ErrJSON(w, http.StatusUnauthorized, errors.New("unauthorized"))
-
-			return
-		}
-
-		if _, err := utils.GetClaimsFromToken(spl[1], a.Config.secretKey); err != nil {
-			utils.ErrJSON(w, http.StatusUnauthorized, errors.New("unauthorized"))
-
-			return
-		}
-
-		next.ServeHTTP(w, r)
-
-		return
-	}
 }

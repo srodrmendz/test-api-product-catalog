@@ -2,69 +2,56 @@ package service
 
 import (
 	"context"
-	"fmt"
-	"time"
 
-	"github.com/golang-jwt/jwt"
-	"github.com/google/uuid"
-	"github.com/srodrmendz/api-auth/model"
-	"github.com/srodrmendz/api-auth/repository"
+	"github.com/srodrmendz/api-product-catalog/model"
+	"github.com/srodrmendz/api-product-catalog/repository"
 )
 
-// Create new auth service
-func New(repository repository.Repository, jwtSecretKey string) *AuthService {
-	return &AuthService{
-		repository:   repository,
-		jwtSecretKey: jwtSecretKey,
+// Create new product service
+func New(repository repository.Repository) *ProductsCatalogService {
+	return &ProductsCatalogService{
+		repository: repository,
 	}
 }
 
-// Authenticate user
-func (s *AuthService) Authenticate(ctx context.Context, email string, password string) (*model.AuthResponse, error) {
-	// First authenticate email and password on repository
-	user, err := s.repository.Authenticate(ctx, email, password)
+// Create a new product
+func (s *ProductsCatalogService) Create(ctx context.Context, product model.Product) (*model.Product, error) {
+	return s.repository.Create(ctx, product)
+}
+
+// Get a product by id
+func (s *ProductsCatalogService) GetByID(ctx context.Context, id string) (*model.Product, error) {
+	return s.repository.GetByID(ctx, id)
+}
+
+// Get a product by sku
+func (s *ProductsCatalogService) GetBySKU(ctx context.Context, sku string) (*model.Product, error) {
+	return s.repository.GetBySKU(ctx, sku)
+}
+
+// Delete a product
+func (s *ProductsCatalogService) Delete(ctx context.Context, id string) error {
+	return s.repository.Delete(ctx, id)
+}
+
+// Update a product
+func (s *ProductsCatalogService) Update(ctx context.Context, request *model.Update) (*model.Product, error) {
+	return s.repository.Update(ctx, request.ID, request.Qty)
+}
+
+// Search products
+func (s *ProductsCatalogService) Search(ctx context.Context, request model.SearchRequest) (*model.SearchResponse, error) {
+	products, total, err := s.repository.Search(ctx, request.Limit, request.Offset)
 	if err != nil {
 		return nil, err
 	}
 
-	now := time.Now().UTC()
-
-	expires := now.Add(expiresAt)
-
-	// Create JWT
-	token, err := s.generateJwt(user.Email, user.UserName, now, expires)
-	if err != nil {
-		return nil, err
-	}
-
-	return &model.AuthResponse{
-		Token:     *token,
-		ExpiresIn: expires.Unix(),
-		ExpiresAt: expires,
-	}, nil
-}
-
-// Generate JWT
-func (s *AuthService) generateJwt(email string, username string, issuedAt, expires time.Time) (*string, error) {
-	// First create claims
-	claims := model.JWTClaim{
-		Username: username,
-		Email:    email,
-		StandardClaims: jwt.StandardClaims{
-			IssuedAt:  issuedAt.Unix(),
-			ExpiresAt: expires.Unix(),
-			Id:        uuid.NewString(),
-			Issuer:    "test_app",
+	return &model.SearchResponse{
+		Products: products,
+		Metadata: model.Metadata{
+			Total:  *total,
+			Limit:  request.Limit,
+			Offset: request.Offset,
 		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// Sign token with secret key
-	tk, err := token.SignedString([]byte(s.jwtSecretKey))
-	if err != nil {
-		return nil, fmt.Errorf("signing jwt token %w", err)
-	}
-
-	return &tk, nil
+	}, nil
 }

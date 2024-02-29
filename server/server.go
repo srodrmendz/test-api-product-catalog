@@ -5,21 +5,20 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/srodrmendz/api-auth/docs"
-	"github.com/srodrmendz/api-auth/service"
+	"github.com/srodrmendz/api-product-catalog/docs"
+	"github.com/srodrmendz/api-product-catalog/service"
 	swagger "github.com/swaggo/http-swagger/v2"
 )
 
 // Initialize all dependencies
-func New(authService service.Service, router *mux.Router, path string, secretKey string, version string, buildDate string) *App {
+func New(productsService service.Service, router *mux.Router, path string, version string, buildDate string) *App {
 	app := &App{
 		Services: services{
-			authService: authService,
+			ProductsService: productsService,
 		},
 		Config: config{
-			version:   version,
-			buildDate: buildDate,
-			secretKey: secretKey,
+			Version:   version,
+			BuildDate: buildDate,
 		},
 		Router: router,
 	}
@@ -32,19 +31,31 @@ func New(authService service.Service, router *mux.Router, path string, secretKey
 	// Initializing healthcheck route
 	subrouter.HandleFunc("/health-check", app.healthCheck).Methods(http.MethodGet)
 
-	// Initializing authenticate route
-	subrouter.HandleFunc("/v1/", app.authenticate).Methods(http.MethodPost)
+	// Initializing create product route
+	subrouter.HandleFunc("/v1", app.create).Methods(http.MethodPost)
 
-	// Initializing protected route
-	subrouter.HandleFunc("/protected", app.authMiddleware(app.protected)).Methods("GET")
+	// Initializing search products route
+	subrouter.HandleFunc("/v1", app.search).Methods(http.MethodGet)
+
+	// Initializing get product by id
+	subrouter.HandleFunc("/v1/{id}/", app.getByID).Methods(http.MethodGet)
+
+	// Initializing delete product
+	subrouter.HandleFunc("/v1/{id}/", app.delete).Methods(http.MethodDelete)
+
+	// Initializing update product
+	subrouter.HandleFunc("/v1/{id}/", app.update).Methods(http.MethodPut)
+
+	// Initializing get product by sku
+	subrouter.HandleFunc("/v1/sku/{sku}/", app.getBySKU).Methods(http.MethodGet)
 
 	// Initializing swagger route
 	router.PathPrefix(fmt.Sprintf("%s/docs", path)).Handler(swagger.WrapHandler)
 
 	// Swagger doc
-	docs.SwaggerInfo.Title = "Auth API"
+	docs.SwaggerInfo.Title = "Product Catalog API"
 	docs.SwaggerInfo.Version = "1.0"
-	docs.SwaggerInfo.BasePath = "/auth"
+	docs.SwaggerInfo.BasePath = path
 	docs.SwaggerInfo.Schemes = []string{"http", "https"}
 
 	return app

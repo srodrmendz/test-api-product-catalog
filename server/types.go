@@ -2,19 +2,16 @@ package server
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/srodrmendz/api-auth/service"
+	"github.com/srodrmendz/api-product-catalog/service"
 )
 
-const bearerTokenHeaderLength = 2
-
 type services struct {
-	authService service.Service
+	ProductsService service.Service
 }
 
 type config struct {
-	version   string
-	buildDate string
-	secretKey string
+	Version   string
+	BuildDate string
 }
 
 type App struct {

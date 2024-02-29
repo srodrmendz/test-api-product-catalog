@@ -19,9 +19,8 @@ func GetProps() Props {
 }
 
 type Props struct {
-	SecretKey string `yaml:"secretKey"`
-	Path      string `yaml:"path"`
-	Database  struct {
+	Path     string `yaml:"path"`
+	Database struct {
 		URI        string `json:"uri"`
 		DB         string `json:"db"`
 		Collection string `json:"collection"`

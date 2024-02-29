@@ -1,11 +1,11 @@
-# Authentication Microservice
+# Product Catalog Microservice
 
-The Authentication Microservice is a Go-based project aimed at providing authentication functionalities. It follows a modular structure and includes directories for repository, service, docs, utils, and a Makefile.
+The Product Catalog is a Go-based project aimed at providing product catalog functionalities. It follows a modular structure and includes directories for repository, service, docs, utils, and a Makefile.
 
 ## Folder Structure
 
 -   **repository**: Contains implementations of repositories for data storage and retrieval.
--   **service**: Holds business logic and services responsible for handling authentication operations.
+-   **service**: Holds business logic and services responsible for handling catalog operations.
 -   **docs**: Swagger documentation.
 -   **utils**: Utilities and helper functions shared across various parts of the project.
 -   **Makefile**: Makefile for automating common development tasks, including testing and linting.
