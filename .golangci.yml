@@ -1,0 +1,39 @@
+run:
+    deadline: 5m
+
+linters-settings:
+    errcheck:
+        check-type-assertions: true
+        check-blank: true
+    govet:
+        check-shadowing: true
+    golint:
+        min-confidence: 0
+    gocyclo:
+        min-complecity: 10
+
+linters:
+    enable-all: true
+    disable:
+        - gochecknoglobals
+        - dupl
+        - maligned
+        - misspell
+        - goconst
+        - godot
+        - gocritic
+        - gofumpt
+        - gci
+        - testpackage
+        - tagliatelle
+        - gosec
+        - lll
+        - containedctx
+issues:
+    exclude-rules:
+        - path: _test.go
+          linters:
+              - funlen
+              - paralleltest
+              - maintidx
+              - scopelint

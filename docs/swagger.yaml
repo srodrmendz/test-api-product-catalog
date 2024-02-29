@@ -1,0 +1,79 @@
+definitions:
+  model.AuthRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  model.AuthResponse:
+    properties:
+      expires_at:
+        type: string
+      expires_in:
+        type: integer
+      token:
+        type: string
+    type: object
+info:
+  contact:
+    email: srodmendz@gmail.com
+    name: Sebastian Rodriguez Mendez
+paths:
+  /health-check:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      tags:
+      - healthcheck
+  /protected:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+      tags:
+      - protected
+  /v1/:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate
+      parameters:
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.AuthRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.AuthResponse'
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+      tags:
+      - authenticate
+swagger: "2.0"

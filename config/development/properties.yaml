@@ -1,0 +1,7 @@
+---
+path: /auth
+secretKey: test-key
+database:
+    uri: mongodb://localhost:27017
+    db: ecommerce
+    collection: auth
