@@ -84,10 +84,20 @@ func TestServer_Create(t *testing.T) {
 			productsService: &mockService{},
 		},
 		{
-			name: "failed to create product, error on service",
+			name: "failed to create product, price value is invalid",
 			body: mockRequest(model.Product{
 				Name: "Name1",
 				Sku:  "Sku1",
+			}),
+			expectedCode:    http.StatusBadRequest,
+			productsService: &mockService{},
+		},
+		{
+			name: "failed to create product, error on service",
+			body: mockRequest(model.Product{
+				Name:  "Name1",
+				Sku:   "Sku1",
+				Price: 500,
 			}),
 			expectedCode: http.StatusInternalServerError,
 			productsService: &mockService{
@@ -97,8 +107,9 @@ func TestServer_Create(t *testing.T) {
 		{
 			name: "failed to create product, product sku already exist",
 			body: mockRequest(model.Product{
-				Name: "Name1",
-				Sku:  "Sku1",
+				Name:  "Name1",
+				Sku:   "Sku1",
+				Price: 500,
 			}),
 			expectedCode: http.StatusBadRequest,
 			productsService: &mockService{
@@ -108,8 +119,9 @@ func TestServer_Create(t *testing.T) {
 		{
 			name: "successfully create product",
 			body: mockRequest(model.Product{
-				Name: "Name1",
-				Sku:  "Sku1",
+				Name:  "Name1",
+				Sku:   "Sku1",
+				Price: 500,
 			}),
 			expectedCode:    http.StatusCreated,
 			productsService: &mockService{},

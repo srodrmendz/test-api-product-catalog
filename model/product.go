@@ -19,6 +19,7 @@ type Product struct {
 	Images    []string  `json:"images,omitempty" bson:"images"`
 	CreatedAt time.Time `json:"created_at" bson:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" bson:"updated_at"`
+	Price     int64     `json:"price" bson:"price"`
 	InStock   bool      `json:"in_stock" bson:"in_stock"`
 }
 
@@ -82,6 +83,10 @@ func (b *CreateBuilder) Build() (*Product, error) {
 		if image == "" {
 			return nil, errors.New("product image cannot be empty")
 		}
+	}
+
+	if product.Price <= 0 {
+		return nil, errors.New("product price invalid value")
 	}
 
 	return &product, nil
