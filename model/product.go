@@ -12,15 +12,16 @@ import (
 
 // Represent product structure
 type Product struct {
-	ID        string    `json:"id" bson:"_id"`
-	Name      string    `json:"name" bson:"name"`
-	Sku       string    `json:"sku" bson:"sku"`
-	Qty       uint64    `json:"qty" bson:"qty"`
-	Images    []string  `json:"images,omitempty" bson:"images"`
-	CreatedAt time.Time `json:"created_at" bson:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" bson:"updated_at"`
-	Price     int64     `json:"price" bson:"price"`
-	InStock   bool      `json:"in_stock" bson:"in_stock"`
+	ID          string    `json:"id" bson:"_id"`
+	Name        string    `json:"name" bson:"name"`
+	Description *string   `json:"description,omitempty" bson:"description,omitempty"`
+	Sku         string    `json:"sku" bson:"sku"`
+	Qty         uint64    `json:"qty" bson:"qty"`
+	Images      []string  `json:"images,omitempty" bson:"images"`
+	CreatedAt   time.Time `json:"created_at" bson:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at" bson:"updated_at"`
+	Price       int64     `json:"price" bson:"price"`
+	InStock     bool      `json:"in_stock" bson:"in_stock"`
 }
 
 // Represent search structure
