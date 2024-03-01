@@ -325,7 +325,7 @@ func TestRepository_Integration_Search(t *testing.T) {
 			productsIDS = append(productsIDS, product.ID)
 		}
 
-		resp, total, err := repo.Search(ctx, 0, 0)
+		resp, total, err := repo.Search(ctx, "", "asc", true, 0, 0)
 
 		// Then
 		require.NoError(t, err)

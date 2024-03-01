@@ -41,7 +41,7 @@ func (s *ProductsCatalogService) Update(ctx context.Context, request *model.Upda
 
 // Search products
 func (s *ProductsCatalogService) Search(ctx context.Context, request model.SearchRequest) (*model.SearchResponse, error) {
-	products, total, err := s.repository.Search(ctx, request.Limit, request.Offset)
+	products, total, err := s.repository.Search(ctx, request.Name, request.Sort, request.InStock, request.Limit, request.Offset)
 	if err != nil {
 		return nil, err
 	}

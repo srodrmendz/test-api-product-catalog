@@ -125,8 +125,10 @@ func (r *ProductsCatalogRepository) Update(ctx context.Context, id string, qty u
 }
 
 // Search products
-func (r *ProductsCatalogRepository) Search(ctx context.Context, limit int, offset int) ([]model.Product, *int64, error) {
+func (r *ProductsCatalogRepository) Search(ctx context.Context, name string, sort string, inStock bool, limit int, offset int) ([]model.Product, *int64, error) {
 	eg, _ := errgroup.WithContext(ctx)
+
+	filter := r.getSearchFilter(name, inStock)
 
 	var products []model.Product
 
@@ -134,7 +136,7 @@ func (r *ProductsCatalogRepository) Search(ctx context.Context, limit int, offse
 
 	// Call concurrenlty search method
 	eg.Go(func() error {
-		prds, err := r.search(ctx, limit, offset)
+		prds, err := r.search(ctx, filter, sort, limit, offset)
 		if err != nil {
 			return err
 		}
@@ -146,7 +148,7 @@ func (r *ProductsCatalogRepository) Search(ctx context.Context, limit int, offse
 
 	// Call concurrenlty get total items on db
 	eg.Go(func() error {
-		tl, err := r.getTotal(ctx)
+		tl, err := r.getTotal(ctx, filter)
 		if err != nil {
 			return err
 		}
@@ -163,14 +165,22 @@ func (r *ProductsCatalogRepository) Search(ctx context.Context, limit int, offse
 	return products, &total, nil
 }
 
-func (r *ProductsCatalogRepository) search(ctx context.Context, limit int, offset int) ([]model.Product, error) {
+func (r *ProductsCatalogRepository) search(ctx context.Context, filter bson.M, sort string, limit int, offset int) ([]model.Product, error) {
 	opt := options.Find()
 
 	opt.SetLimit(int64(limit))
 
 	opt.SetSkip(int64(offset))
 
-	cursor, err := r.collection.Find(ctx, bson.D{}, opt)
+	sortValue := -1
+
+	if sort == "desc" {
+		sortValue = 1
+	}
+
+	opt.SetSort(bson.M{"price": sortValue})
+
+	cursor, err := r.collection.Find(ctx, filter, opt)
 	if err != nil {
 		return nil, err
 	}
@@ -190,6 +200,18 @@ func (r *ProductsCatalogRepository) search(ctx context.Context, limit int, offse
 	return products, nil
 }
 
-func (r *ProductsCatalogRepository) getTotal(ctx context.Context) (int64, error) {
-	return r.collection.CountDocuments(ctx, bson.M{})
+func (r *ProductsCatalogRepository) getTotal(ctx context.Context, filter bson.M) (int64, error) {
+	return r.collection.CountDocuments(ctx, filter)
+}
+
+func (r *ProductsCatalogRepository) getSearchFilter(name string, inStock bool) bson.M {
+	filter := bson.M{
+		"in_stock": inStock,
+	}
+
+	if name != "" {
+		filter["$text"] = bson.M{"$search": name}
+	}
+
+	return filter
 }

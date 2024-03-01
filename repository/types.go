@@ -37,7 +37,7 @@ type Repository interface {
 
 	// Search products
 	// Returns error if there is an error in the system
-	Search(ctx context.Context, limit int, offset int) ([]model.Product, *int64, error)
+	Search(ctx context.Context, name string, sort string, inStock bool, limit int, offset int) ([]model.Product, *int64, error)
 }
 
 // MongoDB Products Catalog Repository Implementation

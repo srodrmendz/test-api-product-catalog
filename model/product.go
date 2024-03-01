@@ -50,8 +50,11 @@ type Update struct {
 
 // Represent search request
 type SearchRequest struct {
-	Limit  int
-	Offset int
+	Limit   int
+	Offset  int
+	Name    string
+	InStock bool
+	Sort    string
 }
 
 // Build product create request and validate all requested data
@@ -152,8 +155,13 @@ func (b *SearchBuilder) Build() (*SearchRequest, error) {
 		return nil, errors.New("incorrect offset format")
 	}
 
+	inStock, _ := strconv.ParseBool(b.r.URL.Query().Get("in_stock"))
+
 	return &SearchRequest{
-		Limit:  limit,
-		Offset: offset,
+		Limit:   limit,
+		Offset:  offset,
+		Name:    b.r.URL.Query().Get("name"),
+		InStock: inStock,
+		Sort:    b.r.URL.Query().Get("sort"),
 	}, nil
 }

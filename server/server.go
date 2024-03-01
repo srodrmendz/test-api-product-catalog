@@ -54,8 +54,11 @@ func New(productsService service.Service, router *mux.Router, path string, versi
 
 	// Swagger doc
 	docs.SwaggerInfo.Title = "Product Catalog API"
+
 	docs.SwaggerInfo.Version = "1.0"
+
 	docs.SwaggerInfo.BasePath = path
+
 	docs.SwaggerInfo.Schemes = []string{"http", "https"}
 
 	return app

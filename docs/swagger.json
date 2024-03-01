@@ -39,6 +39,24 @@
                 ],
                 "parameters": [
                     {
+                        "type": "string",
+                        "description": "name",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "sort",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "in stock",
+                        "name": "in_stock",
+                        "in": "query"
+                    },
+                    {
                         "type": "integer",
                         "description": "limit",
                         "name": "limit",
@@ -278,6 +296,9 @@
                 "created_at": {
                     "type": "string"
                 },
+                "description": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -292,6 +313,9 @@
                 },
                 "name": {
                     "type": "string"
+                },
+                "price": {
+                    "type": "integer"
                 },
                 "qty": {
                     "type": "integer"

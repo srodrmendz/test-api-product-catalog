@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/srodrmendz/api-product-catalog/conf"
 	"github.com/srodrmendz/api-product-catalog/repository"
@@ -56,7 +57,17 @@ func main() {
 
 	fmt.Println("running on 8080 port")
 
-	http.ListenAndServe(":8080", app.Router)
+	corsHandler := handlers.CORS(
+		handlers.AllowedOrigins([]string{"*"}),
+		handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
+		handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
+	)
+
+	http.Handle("/", corsHandler(app.Router))
+
+	fmt.Println("listening on 8080 port...")
+
+	http.ListenAndServe(":8080", nil)
 }
 
 func createMongoClient(ctx context.Context, uri string) *mongo.Client {

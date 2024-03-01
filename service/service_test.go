@@ -301,6 +301,6 @@ func (m *mockRepository) Update(ctx context.Context, id string, qty uint64) (*mo
 	return m.product, m.err
 }
 
-func (m *mockRepository) Search(ctx context.Context, limit int, offset int) ([]model.Product, *int64, error) {
+func (m *mockRepository) Search(ctx context.Context, name string, sort string, inStock bool, limit int, offset int) ([]model.Product, *int64, error) {
 	return m.products, &m.total, m.err
 }

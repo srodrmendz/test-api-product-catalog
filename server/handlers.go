@@ -203,6 +203,9 @@ func (a *App) update(w http.ResponseWriter, r *http.Request) {
 // @Description Search products
 // @Accept  json
 // @Produce  json
+// @Param name query string false "name"
+// @Param sort query string false "sort"
+// @Param in_stock query string false "in stock"
 // @Param limit query int true "limit"
 // @Param offset query int true "offset"
 // @Success 200 {object} model.SearchResponse
